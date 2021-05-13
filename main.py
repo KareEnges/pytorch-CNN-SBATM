@@ -11,36 +11,63 @@ from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 
 
-def loadtraindata():
-    path = r"./train"
-    trainset = torchvision.datasets.ImageFolder(path,
-                                                transform=transforms.Compose([
-                                                    transforms.Resize((100, 100)),  # 将图片缩放到指定大小（h,w）
 
-                                                    transforms.CenterCrop(32),
-                                                    transforms.ToTensor()])
+# 首先获取训练用的图像, 这里是批数据训练
+# 莫烦教程https://www.pytorchtutorial.com/3-5-data-loader/，视频里面的硬币说有意思
+def loadtraindata():
+    path = r"C:/Users/Landian04/Desktop/pytorch/项目/奥特曼识别/train"
+
+    # torchvision.datasets.ImageFolder：创建一个数据加载器(dataloader)，就是将东西转换成 torch 能识别的 Dataset
+    # API说明https://pytorch.org/vision/stable/datasets.html#imagefolder
+    trainset = torchvision.datasets.ImageFolder(path,                               # 图像目录路径
+                                                transform=transforms.Compose([      # transforms.Compose：接收PIL图像并返回转换版本的函数/转换（将几个变换组合在一起），参数是一个transforms对象
+                                                                                    # API说明：https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.Compose
+                                                    transforms.Resize((100, 100)),  # 将图片缩放到指定大小（h,w）
+                                                    transforms.CenterCrop(32),      # 剪裁
+                                                    transforms.ToTensor()])         # 将PIL图像或 numpy.ndarray 转换为 tenser 张量
                                                 )
 
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                              shuffle=True, num_workers=2)
+
+    # torch.utils.data.DataLoader：加载数据, DataLoader 是 torch 给你用来包装你的数据的工具, 他们帮你有效地迭代数据
+    # API说明https://pytorch.org/docs/stable/data.html
+    trainloader = torch.utils.data.DataLoader(  trainset,                           # torch TensorDataset format，即前面创建的 Dataset
+                                                batch_size=4,                       # 指一次拿多少数据出来，这里每步都导出了4个数据进行学习
+                                                shuffle=True,                       # 要不要打乱数据 (打乱比较好)
+                                                num_workers=2                       # 多线程来读数据
+                                            )
     return trainloader
 
 
-class Net(nn.Module):
 
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)  # 卷积层
-        self.pool = nn.MaxPool2d(2, 2)  # 池化层
-        self.conv2 = nn.Conv2d(6, 16, 5)  # 卷积层
-        self.fc1 = nn.Linear(400, 120)  # 全连接层
+
+
+# 建立一个简单神经网络，属于固定套路
+# 可以看莫烦教程https://www.pytorchtutorial.com/3-1-regression/
+class Net(nn.Module):                                                               # 继承 torch 的 nn.Module（所有神经网络模块的基类）
+                                                                                    # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module
+    def __init__(self):                                                             
+        super(Net, self).__init__()                                                 # 继承 nn.Module 的 __init__ 方法，
+        
+        self.conv1 = nn.Conv2d(3, 6, 5)                                             # 卷积层第一层，这里是二维卷积
+                                                                                    # in_channels（输入图像中的通道数，高度）, out_channels（卷积产生的通道数）, kernel_size（卷积内核的大小，这里是5*5像素）
+                                                                                    # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html
+                                                                                    # 莫烦教程https://www.pytorchtutorial.com/4-1-cnn/ ，视频里面用硬币讲得很好
+
+        self.pool = nn.MaxPool2d(2, 2)                                              # 池化层，对应的是二维卷积的池化层，在我看来就是筛选
+                                                                                    # kernel_size（窗口大小，也就是用的大小2*2像素特征去筛选），stride（步长，默认值是kernel_size）
+                                                                                    # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html
+
+        self.conv2 = nn.Conv2d(6, 16, 5)                                            # 卷积层第二层，这里是二维卷积
+                                                                                    # in_channels（第一层的输出）, out_channels（卷积产生的通道数）, kernel_size（卷积内核的大小，这里是5*5像素）
+
+        self.fc1 = nn.Linear(400, 120)                                              # 全连接层
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 2)
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 400)
+    def forward(self, x):                                                           # 前向函数，怎么调用的可以看 https://www.cnblogs.com/llfctt/p/10967651.html , 相当于是 __call__ 方法调用
+        x = self.pool(F.relu(self.conv1(x)))                                        # 
+        x = self.pool(F.relu(self.conv2(x)))                                        # 
+        x = x.view(-1, 400)                                                         # 
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
