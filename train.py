@@ -116,7 +116,7 @@ def trainandsave():
 
     trainloader = loadtraindata()                                                   # 获取训练用图像
     net = Net()                                                                     # 实例化神经网络对象
-    #net.cuda()# Moves all model parameters and buffers to the GPU.
+    net.cuda()# Moves all model parameters and buffers to the GPU.
 
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)                 # 实例化神经网络优化器，主要是为了优化我们的神经网络，使他在我们的训练过程中快起来，节省社交网络训练的时间
                                                                                     # 莫烦教程：https://www.pytorchtutorial.com/3-6-optimizer/
@@ -134,8 +134,8 @@ def trainandsave():
 
             inputs, labels = data                                                   # 在 Torch 中的 Variable 就是一个存放会变化的值的地理位置，里面的值会不停的变化。Variable是可更改的，而Tensor是不可更改的。
             inputs, labels = Variable(inputs), Variable(labels)                     # 莫烦教程：https://www.pytorchtutorial.com/2-2-variable/
-            #inputs = inputs.cuda() # Tensor on GPU
-            #labels = labels.cuda() # Tensor on GPU
+            inputs = inputs.cuda() # Tensor on GPU
+            labels = labels.cuda() # Tensor on GPU
 
 
             img_grid = torchvision.utils.make_grid(inputs)                          # make_grid的作用是将若干幅图像拼成一幅图像，在需要展示一批数据时有用
