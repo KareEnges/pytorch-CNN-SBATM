@@ -92,9 +92,6 @@ class Net(nn.Module):                                                           
 
 
 
-classes = ('不是奥特曼', '奥特曼')
-
-
 def loadtestdata():
     path = r"./test"
     testset = torchvision.datasets.ImageFolder(path,
