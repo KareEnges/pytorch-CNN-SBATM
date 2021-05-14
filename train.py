@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 # 首先定义一个函数，用来获取训练用的图像, 这里是批数据训练
-# 莫烦教程https://www.pytorchtutorial.com/3-5-data-loader/，视频里面的硬币说有意思
+# 莫烦教程https://www.pytorchtutorial.com/3-5-data-loader/
 def loadtraindata():
     path = r"C:/Users/Landian04/Desktop/pytorch/项目/奥特曼识别/train"
 
