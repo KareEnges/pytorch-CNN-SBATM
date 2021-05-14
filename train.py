@@ -1,3 +1,4 @@
+from os import close
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -115,6 +116,7 @@ def trainandsave():
 
     trainloader = loadtraindata()                                                   # 获取训练用图像
     net = Net()                                                                     # 实例化神经网络对象
+    #net.cuda()# Moves all model parameters and buffers to the GPU.
 
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)                 # 实例化神经网络优化器，主要是为了优化我们的神经网络，使他在我们的训练过程中快起来，节省社交网络训练的时间
                                                                                     # 莫烦教程：https://www.pytorchtutorial.com/3-6-optimizer/
@@ -123,8 +125,8 @@ def trainandsave():
     criterion = nn.CrossEntropyLoss()                                               # 实例化损失函数
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss
 
-    for epoch in range(50):                                                       # 此循环即为训练过程，这里是训练1000步
-        running_loss = 0.0                                                          # 损失初值
+    for epoch in range(1000):                                                         # 此循环即为训练过程，这里是训练1000步
+        running_loss = 0.0                                                          # 每次训练损失初值置为0
         for i, data in enumerate(trainloader, 0):                                   # enumerate() 函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中
                                                                                     # 看这个博客：https://blog.csdn.net/qq_29893385/article/details/84640581
 
@@ -132,10 +134,14 @@ def trainandsave():
 
             inputs, labels = data                                                   # 在 Torch 中的 Variable 就是一个存放会变化的值的地理位置，里面的值会不停的变化。Variable是可更改的，而Tensor是不可更改的。
             inputs, labels = Variable(inputs), Variable(labels)                     # 莫烦教程：https://www.pytorchtutorial.com/2-2-variable/
+            #inputs = inputs.cuda() # Tensor on GPU
+            #labels = labels.cuda() # Tensor on GPU
+
 
             img_grid = torchvision.utils.make_grid(inputs)                          # make_grid的作用是将若干幅图像拼成一幅图像，在需要展示一批数据时有用
                                                                                     # 官网API说明：https://pytorch.org/vision/stable/utils.html
             writer.add_image('aoteman', img_grid)                                   # 将图像数据添加到summary，以供TensorBoard使用
+            
 
             optimizer.zero_grad()                                                   # 将所有优化的张量的梯度设置为零
             outputs = net(inputs)                                                   # 相当于调用Net()的forward方法
@@ -143,7 +149,7 @@ def trainandsave():
             loss.backward()                                                         # 反向传播，计算当前梯度，backward()在这里https://pytorch.org/docs/stable/autograd.html，
                                                                                     # 应该是调用损失函数时返回了些什么才会使loss有这个方法
             optimizer.step()                                                        # 进行单次优化
-            running_loss += loss.item()                                             # 算loss的平均值，item()在这里https://pytorch.org/docs/stable/tensors.html?highlight=item#torch.Tensor.item
+            running_loss += loss.item()                                             # 计算这次训练loss的平均值，前面有清零操作，item()在这里https://pytorch.org/docs/stable/tensors.html?highlight=item#torch.Tensor.item
                                                                                     # 八成也应该是调用损失函数时返回了些什么才会使loss有这个方法
 
             if i % 40 == 39:                                                        # 打印出loss值
@@ -163,4 +169,5 @@ def trainandsave():
 
 
 if __name__ == '__main__':
+    print(torch.cuda.is_available())
     trainandsave()
