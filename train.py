@@ -23,7 +23,7 @@ def loadtraindata():
     trainset = torchvision.datasets.ImageFolder(path,                               # 图像目录路径
                                                 transform=transforms.Compose([      # transforms.Compose：接收PIL图像并返回转换版本的函数/转换（将几个变换组合在一起），参数是一个transforms对象
                                                                                     # API说明：https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.Compose
-                                                    transforms.Resize((100, 100)),  # 将图片缩放到指定大小（h,w）
+                                                    transforms.Resize((200, 200)),  # 将图片缩放到指定大小（h,w）
                                                     transforms.CenterCrop(32),      # 剪裁
                                                     transforms.ToTensor()])         # 将PIL图像或 numpy.ndarray 转换为 tenser 张量
                                                 )
