@@ -20,3 +20,5 @@
 /train/*
 /test/*
 /runs/aoteman_1/*
+!*/.keep
+!*/runs/aoteman_1/.keep
