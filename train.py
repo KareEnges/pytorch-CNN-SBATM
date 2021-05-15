@@ -47,7 +47,7 @@ def loadtraindata():
 class Net(nn.Module):                                                               # 继承 torch 的 nn.Module（所有神经网络模块的基类）
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module
     def __init__(self):                                                             
-        super(Net, self).__init__()                                                 # 继承 nn.Module 的 __init__ 方法，
+        super(Net, self).__init__()                                                 # 继承 nn.Module 的内置方法，
         
         self.conv1 = nn.Conv2d(3, 6, 5)                                             # 卷积层第一层，这里是二维卷积，即卷积在二维平面上移动，图像是二维的嘛
                                                                                     # in_channels（输入图像中的通道数，高度）, out_channels（卷积产生的通道数）, kernel_size（卷积内核的大小，这里是5*5像素）
@@ -112,7 +112,7 @@ def trainandsave():
     criterion = nn.CrossEntropyLoss()                                               # 实例化损失函数
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss
 
-    for epoch in range(100):                                                         # 此循环即为训练过程，这里是训练1000步
+    for epoch in range(50):                                                         # 此循环即为训练过程，这里是训练1000步
         running_loss = 0.0                                                          # 每次训练损失初值置为0
         for i, data in enumerate(trainloader, 0):                                   # enumerate() 函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中
                                                                                     # 看这个博客：https://blog.csdn.net/qq_29893385/article/details/84640581
