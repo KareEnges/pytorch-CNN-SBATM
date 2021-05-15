@@ -23,7 +23,7 @@ def loadtraindata():
     trainset = torchvision.datasets.ImageFolder(path,                               # 图像目录路径
                                                 transform=transforms.Compose([      # transforms.Compose：接收PIL图像并返回转换版本的函数/转换（将几个变换组合在一起），参数是一个transforms对象
                                                                                     # API说明：https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.Compose
-                                                    transforms.Resize((200, 200)),  # 将图片缩放到指定大小（h,w）
+                                                    transforms.Resize((100, 100)),  # 将图片缩放到指定大小（h,w）
                                                     transforms.CenterCrop(32),      # 剪裁
                                                     transforms.ToTensor()])         # 将PIL图像或 numpy.ndarray 转换为 tenser 张量
                                                 )
@@ -112,7 +112,7 @@ def trainandsave():
     criterion = nn.CrossEntropyLoss()                                               # 实例化损失函数
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss
 
-    for epoch in range(50):                                                         # 此循环即为训练过程，这里是训练1000步
+    for epoch in range(1000):                                                         # 此循环即为训练过程，这里是训练1000步
         running_loss = 0.0                                                          # 每次训练损失初值置为0
         for i, data in enumerate(trainloader, 0):                                   # enumerate() 函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中
                                                                                     # 看这个博客：https://blog.csdn.net/qq_29893385/article/details/84640581
