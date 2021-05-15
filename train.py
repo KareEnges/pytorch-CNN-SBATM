@@ -112,7 +112,7 @@ def trainandsave():
     criterion = nn.CrossEntropyLoss()                                               # 实例化损失函数
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss
 
-    for epoch in range(5000):                                                         # 此循环即为训练过程，这里是训练1000步
+    for epoch in range(100):                                                         # 此循环即为训练过程，这里是训练1000步
         running_loss = 0.0                                                          # 每次训练损失初值置为0
         for i, data in enumerate(trainloader, 0):                                   # enumerate() 函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中
                                                                                     # 看这个博客：https://blog.csdn.net/qq_29893385/article/details/84640581
