@@ -1,5 +1,6 @@
 from os import close
 import torch
+from torch._C import device
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
@@ -17,13 +18,13 @@ classes = ('NO', 'YES')
 
 
 
-# 在加载使用整个神经网络的模型结构以及参数时，要把 train.py 里构造的这个神经网络类搞过来
-# 不然会报错 AttributeError: Can't get attribute 'Net' on <module '__main__' from 'c:/Users/Landian04/Desktop/main.py'>
-# 可以只保存，加载模型的权重参数来解决这个问题
+
+# 定义一个类，用来建立一个简单神经网络，属于固定套路
+# 可以看这个博客：https://blog.csdn.net/monk1992/article/details/89947267
 class Net(nn.Module):                                                               # 继承 torch 的 nn.Module（所有神经网络模块的基类）
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module
     def __init__(self):                                                             
-        super(Net, self).__init__()                                                 # 继承 nn.Module 的 __init__ 方法，
+        super().__init__()                                                 # 继承 nn.Module 的内置方法，
         
         self.conv1 = nn.Conv2d(3, 6, 5)                                             # 卷积层第一层，这里是二维卷积，即卷积在二维平面上移动，图像是二维的嘛
                                                                                     # in_channels（输入图像中的通道数，高度）, out_channels（卷积产生的通道数）, kernel_size（卷积内核的大小，这里是5*5像素）
@@ -41,6 +42,7 @@ class Net(nn.Module):                                                           
         # 在基本的CNN网络中，全连接层的作用是将经过多个卷积层和池化层的图像特征图中的特征进行整合，获取图像特征具有的高层含义，之后用于图像分类
         # in_features（输入的二维张量的大小或者上层神经元个数），out_features（本层神经元个数）
         # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
+        self.fc0 = nn.Linear(1296, 400)  
         self.fc1 = nn.Linear(400, 120)                                              # 可以通过print(x.size())查看张量大小，这里为什么输入是400，因为经过第二次卷积后，图像5*5，16通道，5*5*16=400
         self.fc2 = nn.Linear(120, 84)                                               # 输入是上一次的输出，输出是下一次的输入
         self.fc3 = nn.Linear(84, 2)                                                 # 输入是上一次的输出，输出......这里为什么是2
@@ -52,20 +54,28 @@ class Net(nn.Module):                                                           
         # 官方API说明：https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html#torch.nn.ReLU
         # 好像是继承过去的一个方法：https://pytorch.org/docs/stable/nn.functional.html
         # 莫烦教程，激励函数：https://www.pytorchtutorial.com/2-3-activation/
+        #(32-5+0)/1+1 = 28 28/2=14
         x = self.pool(F.relu(self.conv1(x)))                                        # 首先对输入层做一次卷积运算，再进行激励（非线性映射），再池化
-        x = self.pool(F.relu(self.conv2(x)))                                        # 然后对第一次操作（卷积、激励、池化）的结果做第二次卷积，同样卷积、激励、池化
-                                                                                    
-                                                                                    
-        x = x.view(-1, 400)                                                         # 将 torch 变量转为一个400列的张量
-                                                                                    # 官网API说明：https://pytorch.org/docs/stable/tensor_view.html
+        # 4*6*14*14
+        # (14-5)/1 + 1 = 10 10/2=5
+        x = self.pool(F.relu(self.conv2(x)))                                        # 然后对第一次操作（卷积、激励、池化）的结果做第二次卷积，同样卷积、激励、池化                                                                 
+        # 4*16*5*5                                                                      
+        #print(x.size())
+        #exit()
+        x = x.view(-1, 1296)                                                         # 将 torch 变量转为一个400列的张量
+        # 4*400                                                                        # 官网API说明：https://pytorch.org/docs/stable/tensor_view.html
                                                                                     # 这个博客讲得很好：https://nickhuang1996.blog.csdn.net/article/details/86569501
+        #0,1
+        #1,0
+        #0.1 0.9
 
-
+        #如果输出是一个维度
+        # 通过一个sigmoid函数，输出大小范围在0-1之间，以0.5为界限，》0.5是一类，小于0.5是一类
+        x = F.relu(self.fc0(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-
 
 
 
@@ -78,7 +88,7 @@ def loadtestdata():
     path = r"C:/Users/Landian04/Desktop/pytorch/项目/奥特曼识别/test"
     testset = torchvision.datasets.ImageFolder( path,
                                                 transform=transforms.Compose([
-                                                    transforms.Resize((100, 100)),              # 将图片缩放到指定大小（h,w）
+                                                    transforms.Resize((50,50)),              # 将图片缩放到指定大小（h,w）
                                                     transforms.ToTensor()])                     # 将PIL图像或 numpy.ndarray 转换为 tenser 张量
                                                )
     testloader = torch.utils.data.DataLoader(   testset,                                        # torch TensorDataset format，即前面创建的 Dataset
@@ -92,8 +102,11 @@ def loadtestdata():
 # 取出训练的整个神经网络的模型结构以及参数，net.pkl 是在 train.py 里面保存的
 # 具体注释看 train.py 里面
 def reload_net():
-    trainednet = torch.load('net.pkl')                                              
-    return trainednet
+    net = Net()
+    net = net.cuda()
+    checkpoint = torch.load('net_params.pkl')       
+    net.load_state_dict(checkpoint)                                       
+    return net
 
 
 
@@ -116,7 +129,10 @@ def test():
     
     print('GroundTruth: ', " ".join('%-10s' % classes[labels[j]] for j in range(25)))            # 打印25个图的实际结果
     outputs = net(Variable(images).cuda())                                                      # 对目标图像进行测试
+    #print(outputs)
     _, predicted = torch.max(outputs.data, 1)                                                   # torch.max返回输入张量中所有元素的最大值
+    #print(torch.argmax(outputs,dim = 1))
+    #print(predicted)
                                                                                                 # 官网API说明：https://pytorch.org/docs/stable/generated/torch.max.html
                                                                                                 # 可以看这个博客：https://blog.csdn.net/weixin_48249563/article/details/111387501
 
@@ -131,4 +147,3 @@ if __name__ == '__main__':
     test()
 
 
-    

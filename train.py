@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
-
+import torch.utils.data as data
+from torchvision.transforms.transforms import RandomCrop
 
 
 # 首先定义一个函数，用来获取训练用的图像, 这里是批数据训练
@@ -23,8 +24,9 @@ def loadtraindata():
     trainset = torchvision.datasets.ImageFolder(path,                               # 图像目录路径
                                                 transform=transforms.Compose([      # transforms.Compose：接收PIL图像并返回转换版本的函数/转换（将几个变换组合在一起），参数是一个transforms对象
                                                                                     # API说明：https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.Compose
-                                                    transforms.Resize((100, 100)),  # 将图片缩放到指定大小（h,w）
-                                                    transforms.CenterCrop(32),      # 剪裁
+                                                    transforms.Resize((200, 200)),    # 将图片缩放到指定大小（h,w）
+                                                    #transforms.CenterCrop(32),      # 剪裁
+                                                    transforms.RandomCrop(50),     # 对过拟合有帮助，相当于做了图像增强
                                                     transforms.ToTensor()])         # 将PIL图像或 numpy.ndarray 转换为 tenser 张量
                                                 )
 
@@ -38,6 +40,15 @@ def loadtraindata():
                                             )
     return trainloader
 
+# class DataSet(data.Dataset):
+#     def __init__(self) -> None:
+#         super().__init__()
+
+#     def __getitem__(self, index) -> T_co:
+#         pass
+
+#     def __len__(self):
+#         pass
 
 
 
@@ -47,7 +58,7 @@ def loadtraindata():
 class Net(nn.Module):                                                               # 继承 torch 的 nn.Module（所有神经网络模块的基类）
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module
     def __init__(self):                                                             
-        super(Net, self).__init__()                                                 # 继承 nn.Module 的内置方法，
+        super().__init__()                                                 # 继承 nn.Module 的内置方法，
         
         self.conv1 = nn.Conv2d(3, 6, 5)                                             # 卷积层第一层，这里是二维卷积，即卷积在二维平面上移动，图像是二维的嘛
                                                                                     # in_channels（输入图像中的通道数，高度）, out_channels（卷积产生的通道数）, kernel_size（卷积内核的大小，这里是5*5像素）
@@ -65,9 +76,10 @@ class Net(nn.Module):                                                           
         # 在基本的CNN网络中，全连接层的作用是将经过多个卷积层和池化层的图像特征图中的特征进行整合，获取图像特征具有的高层含义，之后用于图像分类
         # in_features（输入的二维张量的大小或者上层神经元个数），out_features（本层神经元个数）
         # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-        self.fc1 = nn.Linear(400, 120)                                              # 可以通过print(x.size())查看张量大小，这里为什么输入是400，因为经过第二次卷积后，图像5*5，16通道，5*5*16=400
-        self.fc2 = nn.Linear(120, 84)                                               # 输入是上一次的输出，输出是下一次的输入
-        self.fc3 = nn.Linear(84, 2)                                                 # 输入是上一次的输出，输出......这里为什么是2
+        self.fc0 = nn.Linear(1296, 900)  
+        self.fc1 = nn.Linear(900, 600)                                              # 可以通过print(x.size())查看张量大小，这里为什么输入是400，因为经过第二次卷积后，图像5*5，16通道，5*5*16=400
+        self.fc2 = nn.Linear(600, 300)                                               # 输入是上一次的输出，输出是下一次的输入
+        self.fc3 = nn.Linear(300, 2)                                                 # 输入是上一次的输出，输出......这里为什么是2
                                                                                     # 这边为什么是三层......
 
     def forward(self, x):                                                           # 前向函数，怎么调用的可以看 https://www.cnblogs.com/llfctt/p/10967651.html , 相当于是 __call__ 方法调用
@@ -76,15 +88,24 @@ class Net(nn.Module):                                                           
         # 官方API说明：https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html#torch.nn.ReLU
         # 好像是继承过去的一个方法：https://pytorch.org/docs/stable/nn.functional.html
         # 莫烦教程，激励函数：https://www.pytorchtutorial.com/2-3-activation/
+        #(32-5+0)/1+1 = 28 28/2=14
         x = self.pool(F.relu(self.conv1(x)))                                        # 首先对输入层做一次卷积运算，再进行激励（非线性映射），再池化
-        x = self.pool(F.relu(self.conv2(x)))                                        # 然后对第一次操作（卷积、激励、池化）的结果做第二次卷积，同样卷积、激励、池化
-                                                                                    
-                                                                                    
-        x = x.view(-1, 400)                                                         # 将 torch 变量转为一个400列的张量
-                                                                                    # 官网API说明：https://pytorch.org/docs/stable/tensor_view.html
+        # 4*6*14*14
+        # (14-5)/1 + 1 = 10 10/2=5
+        x = self.pool(F.relu(self.conv2(x)))                                        # 然后对第一次操作（卷积、激励、池化）的结果做第二次卷积，同样卷积、激励、池化                                                                 
+        # 4*16*5*5                                                                      
+        #print(x.size())
+        #exit()
+        x = x.view(-1, 1296)                                                         # 将 torch 变量转为一个400列的张量
+        # 4*400                                                                        # 官网API说明：https://pytorch.org/docs/stable/tensor_view.html
                                                                                     # 这个博客讲得很好：https://nickhuang1996.blog.csdn.net/article/details/86569501
+        #0,1
+        #1,0
+        #0.1 0.9
 
-
+        #如果输出是一个维度
+        # 通过一个sigmoid函数，输出大小范围在0-1之间，以0.5为界限，》0.5是一类，小于0.5是一类
+        x = F.relu(self.fc0(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -109,7 +130,7 @@ def trainandsave():
                                                                                     # 莫烦教程：https://www.pytorchtutorial.com/3-6-optimizer/
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/optim.html
                                                                                     
-    criterion = nn.CrossEntropyLoss()                                               # 实例化损失函数
+    criterion = nn.CrossEntropyLoss()                                               # 实例化损失函数,交叉熵
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss
 
     for epoch in range(1000):                                                         # 此循环即为训练过程，这里是训练1000步
@@ -144,7 +165,7 @@ def trainandsave():
                 running_loss = 0.0
 
     print('Finished Training')                                                      
-    torch.save(net, 'net.pkl')                                                      # 保存整个神经网络的模型结构以及参数
+    #torch.save(net, 'net.pkl')                                                      # 保存整个神经网络的模型结构以及参数
     torch.save(net.state_dict(), 'net_params.pkl')                                  # 只保存模型参数
                                                                                     # 可以看这个博客：https://blog.csdn.net/caiweibin2246/article/details/107559524
                                                                                     # 莫烦教程：https://www.pytorchtutorial.com/3-4-save-and-restore-model/
