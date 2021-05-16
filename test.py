@@ -42,10 +42,10 @@ class Net(nn.Module):                                                           
         # 在基本的CNN网络中，全连接层的作用是将经过多个卷积层和池化层的图像特征图中的特征进行整合，获取图像特征具有的高层含义，之后用于图像分类
         # in_features（输入的二维张量的大小或者上层神经元个数），out_features（本层神经元个数）
         # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-        self.fc0 = nn.Linear(1296, 400)  
-        self.fc1 = nn.Linear(400, 120)                                              # 可以通过print(x.size())查看张量大小，这里为什么输入是400，因为经过第二次卷积后，图像5*5，16通道，5*5*16=400
-        self.fc2 = nn.Linear(120, 84)                                               # 输入是上一次的输出，输出是下一次的输入
-        self.fc3 = nn.Linear(84, 2)                                                 # 输入是上一次的输出，输出......这里为什么是2
+        self.fc0 = nn.Linear(1296, 900)  
+        self.fc1 = nn.Linear(900, 600)                                              # 可以通过print(x.size())查看张量大小，这里为什么输入是400，因为经过第二次卷积后，图像5*5，16通道，5*5*16=400
+        self.fc2 = nn.Linear(600, 300)                                               # 输入是上一次的输出，输出是下一次的输入
+        self.fc3 = nn.Linear(300, 2)                                                 # 输入是上一次的输出，输出.....
                                                                                     # 这边为什么是三层......
 
     def forward(self, x):                                                           # 前向函数，怎么调用的可以看 https://www.cnblogs.com/llfctt/p/10967651.html , 相当于是 __call__ 方法调用

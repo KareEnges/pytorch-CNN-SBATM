@@ -14,6 +14,8 @@ import torch.utils.data as data
 from torchvision.transforms.transforms import RandomCrop
 
 
+use_gpu = torch.cuda.is_available()
+
 # 首先定义一个函数，用来获取训练用的图像, 这里是批数据训练
 # 莫烦教程https://www.pytorchtutorial.com/3-5-data-loader/
 def loadtraindata():
@@ -24,9 +26,9 @@ def loadtraindata():
     trainset = torchvision.datasets.ImageFolder(path,                               # 图像目录路径
                                                 transform=transforms.Compose([      # transforms.Compose：接收PIL图像并返回转换版本的函数/转换（将几个变换组合在一起），参数是一个transforms对象
                                                                                     # API说明：https://pytorch.org/vision/stable/transforms.html#torchvision.transforms.Compose
-                                                    transforms.Resize((200, 200)),    # 将图片缩放到指定大小（h,w）
+                                                    transforms.Resize((50, 50)),    # 将图片缩放到指定大小（h,w）
                                                     #transforms.CenterCrop(32),      # 剪裁
-                                                    transforms.RandomCrop(50),     # 对过拟合有帮助，相当于做了图像增强
+                                                    #transforms.RandomCrop(50),     # 对过拟合有帮助，相当于做了图像增强
                                                     transforms.ToTensor()])         # 将PIL图像或 numpy.ndarray 转换为 tenser 张量
                                                 )
 
@@ -124,16 +126,18 @@ def trainandsave():
 
     trainloader = loadtraindata()                                                   # 获取训练用图像
     net = Net()                                                                     # 实例化神经网络对象
-    net.cuda()# Moves all model parameters and buffers to the GPU.
-
+    if (use_gpu):
+        net.cuda()# Moves all model parameters and buffers to the GPU.
+    
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)                 # 实例化神经网络优化器，主要是为了优化我们的神经网络，使他在我们的训练过程中快起来，节省社交网络训练的时间
                                                                                     # 莫烦教程：https://www.pytorchtutorial.com/3-6-optimizer/
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/optim.html
                                                                                     
     criterion = nn.CrossEntropyLoss()                                               # 实例化损失函数,交叉熵
-                                                                                    # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss
+    if (use_gpu):
+        criterion = criterion.cuda()                                                                                # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html#torch.nn.CrossEntropyLoss
 
-    for epoch in range(1000):                                                         # 此循环即为训练过程，这里是训练1000步
+    for epoch in range(10000):                                                         # 此循环即为训练过程，这里是训练1000步
         running_loss = 0.0                                                          # 每次训练损失初值置为0
         for i, data in enumerate(trainloader, 0):                                   # enumerate() 函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中
                                                                                     # 看这个博客：https://blog.csdn.net/qq_29893385/article/details/84640581
@@ -142,9 +146,12 @@ def trainandsave():
 
             inputs, labels = data                                                   # 在 Torch 中的 Variable 就是一个存放会变化的值的地理位置，里面的值会不停的变化。Variable是可更改的，而Tensor是不可更改的。
             inputs, labels = Variable(inputs), Variable(labels)                     # 莫烦教程：https://www.pytorchtutorial.com/2-2-variable/
-            inputs = inputs.cuda() # Tensor on GPU
-            labels = labels.cuda() # Tensor on GPU
-
+            if (use_gpu):
+                inputs = inputs.cuda() # Tensor on GPU
+                labels = labels.cuda() # Tensor on GPU
+            #print(inputs)
+            #print(inputs.size())
+            #exit()
 
             img_grid = torchvision.utils.make_grid(inputs)                          # make_grid的作用是将若干幅图像拼成一幅图像，在需要展示一批数据时有用
                                                                                     # 官网API说明：https://pytorch.org/vision/stable/utils.html
@@ -153,7 +160,9 @@ def trainandsave():
 
             optimizer.zero_grad()                                                   # 将所有优化的张量的梯度设置为零
             outputs = net(inputs)                                                   # 相当于调用Net()的forward方法
+            
             loss = criterion(outputs, labels)                                       # 损失函数，具体看源码去，它主要刻画的是实际输出（概率）与期望输出（概率）的距离，也就是交叉熵的值越小，两个概率分布就越接近
+            
             loss.backward()                                                         # 反向传播，计算当前梯度，backward()在这里https://pytorch.org/docs/stable/autograd.html，
                                                                                     # 应该是调用损失函数时返回了些什么才会使loss有这个方法
             optimizer.step()                                                        # 进行单次优化
@@ -165,7 +174,7 @@ def trainandsave():
                 running_loss = 0.0
 
     print('Finished Training')                                                      
-    #torch.save(net, 'net.pkl')                                                      # 保存整个神经网络的模型结构以及参数
+    #torch.save(net, 'net.pkl')                                                     # 保存整个神经网络的模型结构以及参数
     torch.save(net.state_dict(), 'net_params.pkl')                                  # 只保存模型参数
                                                                                     # 可以看这个博客：https://blog.csdn.net/caiweibin2246/article/details/107559524
                                                                                     # 莫烦教程：https://www.pytorchtutorial.com/3-4-save-and-restore-model/
@@ -177,5 +186,6 @@ def trainandsave():
 
 
 if __name__ == '__main__':
-    print(torch.cuda.is_available())
+    # use_gpu=0
+    print(use_gpu)
     trainandsave()
