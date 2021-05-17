@@ -19,7 +19,7 @@ classes = ('NO', 'YES')
 
 
 
-# 定义一个类，用来建立一个简单神经网络，属于固定套路111
+# 定义一个类，用来建立一个简单神经网络，属于固定套路111111
 # 可以看这个博客：https://blog.csdn.net/monk1992/article/details/89947267
 class Net(nn.Module):                                                               # 继承 torch 的 nn.Module（所有神经网络模块的基类）
                                                                                     # 官网API说明：https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module
