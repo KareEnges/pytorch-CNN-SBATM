@@ -16,7 +16,7 @@ from torchvision.transforms.transforms import RandomCrop
 
 use_gpu = torch.cuda.is_available()
 
-# 首先定义一个函数，用来获取训练用的图像, 这里是批数据训练
+# 首先定义一个函数，用来获取训练用的图像, 这里是批数据训练11111111111111111111
 # 莫烦教程https://www.pytorchtutorial.com/3-5-data-loader/
 def loadtraindata():
     path = r"C:/Users/Landian04/Desktop/pytorch/项目/奥特曼识别/train"
