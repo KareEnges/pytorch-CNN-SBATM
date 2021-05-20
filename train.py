@@ -1,4 +1,5 @@
 from os import close
+import os
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -42,16 +43,44 @@ def loadtraindata():
                                             )
     return trainloader
 
-# class DataSet(data.Dataset):
-#     def __init__(self) -> None:
-#         super().__init__()
 
-#     def __getitem__(self, index) -> T_co:
-#         pass
 
+
+# 之所以要自己写DataSet，是因为原本提供的DataSet无法满足我们的实际需求，此时就需要我们自定义。
+# 通过继承 torch.utils.data.Dataset来实现，在继承的时候，需要 override 三个方法：
+# init： 用来初始化一些有关操作数据集的参数
+# getitem:使dataset[i]返回数据集中第i个样本.定义数据获取的方式（包括读取数据，对数据进行变换等），该方法支持从 0 到 len(self)-1的索引。obj[index]等价于obj.getitem
+# len:获取数据集的大小。len(obj)等价于obj.len()
+# 1.首先创建好自己的DataSet类，然后创建一个Dataset的对象
+# 2.将创建好的DataSet对象传入DataLoader中，创建一个 DataLoader的对象
+# 3.遍历这个DataLoader对象，从而取出自己的数据
+# class DataSet(data.Dataset):#需要继承data.Dataset
+#     # __init__是初始化该类的一些基础参数
+#     def __init__(self, file_path):
+#         # 保证输入的是正确的路径
+#         if not os.path.isdir(file_path):
+#             raise ValueError("input file_path is not a dir")
+#         self.file_path = file_path
+#         # 获取路径下所有的图片名称，必须保证路径内没有图片以外的数据
+#         self.image_list = os.listdir(file_path)
+#         # 将PIL的Image转为Tensor
+#         self.transforms = transforms.ToTensor()
+
+
+#     def _read_convert_image(self, image_name):
+#         image = Image.open(image_name)
+#         image = self.transforms(image).float()
+#         return image
+#     # 返回整个数据集的大小
 #     def __len__(self):
-#         pass
+#         return len(self.image_list)
 
+#     def __getitem__(self, index):#根据索引index返回dataset[index]
+#         # 根据index获取图片完整路径
+#         image_path = os.path.join(self.file_path, self.image_list[index])
+#         # 将图片并转为Tensor
+#         image = self._read_convert_image(image_path)
+#         return image
 
 
 
